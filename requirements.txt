@@ -1,0 +1,8 @@
+requests
+lxml
+json
+feedparser
+os
+sqlite3
+time
+re
