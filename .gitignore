@@ -108,5 +108,6 @@ ENV/
 v2ex_config.json
 cookies.txt
 database.db
-time_test.txt
+time_log.json
 *~
+dump.rdb
