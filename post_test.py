@@ -22,7 +22,7 @@ class post_test(object):
         self.import_cookies()
         
     def import_cookies(self):
-        with open('cookies.txt','r') as f:
+        with open('.cookies.json','r') as f:
             cookies=requests.utils.cookiejar_from_dict(json.load(f))
             self.s.cookies=cookies
         

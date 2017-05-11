@@ -7,3 +7,4 @@ time
 re
 redis
 rq
+feedparser

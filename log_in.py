@@ -17,7 +17,10 @@ class v2ex_log_in(object):
 
     def __init__(self):
         '''
-        log in v2ex account,return the cookies.
+        >>>import log_in
+        >>>log_s=log_in.v2ex_log_in()
+        >>>log_s.log_in()
+        >>>log_s.save_cookies()
         '''
         self.load_config()
         self.s=requests.session()
@@ -25,8 +28,8 @@ class v2ex_log_in(object):
         return
     
     def load_config(self):
-        if os.path.exists('v2ex_config.json'):
-            with open('v2ex_config.json','r') as f:
+        if os.path.exists('config.json'):
+            with open('config.json','r') as f:
                 config=json.load(f)
                 self.account=config["account"]
                 self.passwd=config["password"]
@@ -50,7 +53,7 @@ class v2ex_log_in(object):
         resp=self.s.get('https://www.v2ex.com/go/flamewar')
         if '登录' in resp.text:
             raise LogError('log failed.')
-        with open('cookies.txt','w') as f:
+        with open('.cookies.json','w') as f:
             json.dump(requests.utils.dict_from_cookiejar(self.s.cookies),f)
         return
             

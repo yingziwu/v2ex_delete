@@ -105,9 +105,10 @@ ENV/
 #Custom
 .project
 .pydevproject
-v2ex_config.json
-cookies.txt
+config.json
+.cookies.json
 database.db
-time_log.json
+.time_log.json
 *~
 dump.rdb
+.topics_all.json
