@@ -29,17 +29,19 @@ class v2ex_log_in(object):
         self.account=settings.account
         self.passwd=settings.password
         self.proxy_enable=settings.proxy_enable
-        self.base_headers=settings.WEB_headers
+        self.base_headers=settings.WEB_headers_list[0]
         self.s=requests.session()
         self.s.headers=self.base_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies        
+            self.s.proxies=settings.proxies
+        return
 
     def log_in(self):
         #1
         r1=self.s.get('https://www.v2ex.com/signin')
         if r1.status_code != 200:
             raise LogError
+        self.s.headers={'Referer': 'https://v2ex.com/signin'}
         t1=etree.HTML(r1.text)
         text_name=t1.xpath('//input[@type="text"]/@name')[-1]
         password_name=t1.xpath('//input[@type="password"]/@name')[0]

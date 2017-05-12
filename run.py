@@ -5,7 +5,6 @@ Created on May 9, 2017
 '''
 import json
 import time
-import sqlite3
 import requests
 from v2ex_base import log_in
 import os
@@ -93,12 +92,7 @@ class Start(object):
                 footer=node["footer"]
                 created=node["created"]
                 n_time=int(time.time())
-                sql="REPLACE INTO NODES (ID,name,url,title,title_alternative,topics,header,footer,created,time) VALUES ( %s );" % ', '.join(['?'] * 10)
-                try:
-                    self.SQ.cursor.execute(sql, (n_id,name,url,title,title_alternative,topics,header,footer,created,n_time))
-                except sqlite3.IntegrityError as e:
-                    pass
-            self.SQ.conn.commit()
+                self.SQ.write_to_db_node(n_id, name, url, title, title_alternative, topics, header, footer, created, n_time)
             self.time_log["nodes_time"]=str(int(time.time()))
         return
         
@@ -106,12 +100,13 @@ class Start(object):
         node_configs_1=[{'sql':'SELECT ID FROM NODES WHERE topics >= 8000;','sleep_time':5,'between_time':900,'time_log':'8000_node','queue_name':'node1'},
                       {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 3000 AND 8000;','sleep_time':10,'between_time':1800,'time_log':'4000_node','queue_name':'node2'},
                       {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 1000 AND 3000;','sleep_time':20,'between_time':7200,'time_log':'1000_node','queue_name':'node3'},
-                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 100 AND 1000;','sleep_time':120,'between_time':86400,'time_log':'500_node','queue_name':'node4'}]
+                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 100 AND 1000;','sleep_time':90,'between_time':86400,'time_log':'500_node','queue_name':'node4'},
+                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 1 AND 500;','sleep_time':90,'between_time':172800,'time_log':'0_node','queue_name':'node5'}]
         node_configs_2=[{'sql':'SELECT ID FROM NODES WHERE topics >= 8000;','sleep_time':5,'between_time':1800,'time_log':'8000_node','queue_name':'node1'},
                       {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 3000 AND 8000;','sleep_time':10,'between_time':3600,'time_log':'4000_node','queue_name':'node2'},
                       {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 1000 AND 3000;','sleep_time':20,'between_time':14400,'time_log':'1000_node','queue_name':'node3'},
-                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 100 AND 1000;','sleep_time':120,'between_time':86400,'time_log':'500_node','queue_name':'node4'},
-                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 1 AND 500;','sleep_time':180,'between_time':172800,'time_log':'0_node','queue_name':'node5'}]
+                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 100 AND 1000;','sleep_time':90,'between_time':86400,'time_log':'500_node','queue_name':'node4'},
+                      {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 1 AND 500;','sleep_time':90,'between_time':172800,'time_log':'0_node','queue_name':'node5'}]
         time.tzname=('CST', 'CST')
         if int(time.strftime('%H')) >= 8 or int(time.strftime('%H')) < 2:
             node_configs=node_configs_1
@@ -133,7 +128,7 @@ class Start(object):
         return
     
     def get_rss(self):
-        if int(time.time())-int(self.time_log["rss_time"]) >= 900:
+        if int(time.time())-int(self.time_log["rss_time"]) >= 600:
             rss_spider.Rss_spider()
             self.time_log["rss_time"]=str(int(time.time()))
         return
@@ -143,7 +138,8 @@ class Start(object):
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies        
+            self.s.proxies=settings.proxies
+        return      
         
 
 class APIError(ValueError):

@@ -49,6 +49,7 @@ class spider(object):
             n_time=int(time.time())
             self.SQ.write_to_db_base(t_id,title,author,author_id,content,content_rendered,replies,node,created,n_time)
         self.SQ.conn.commit()
+        return
     
     def load_config(self):
         self.proxy_enable=settings.proxy_enable
@@ -56,6 +57,7 @@ class spider(object):
         self.s.headers=settings.API_headers
         if self.proxy_enable:
             self.s.proxies=settings.proxies
+        return
 
 class APIError(ValueError):
     pass
