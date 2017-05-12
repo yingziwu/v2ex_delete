@@ -1,4 +1,5 @@
 requests
+requests[socks]
 lxml
 json
 os

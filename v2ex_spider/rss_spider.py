@@ -4,7 +4,6 @@ Created on May 9, 2017
 @author: yingziwu
 '''
 import feedparser
-import sqlite3
 import time
 import re
 import requests
@@ -13,6 +12,9 @@ from rq import Queue
 from v2ex_spider import topic_spider
 import json
 import os
+from v2ex_base.v2_sql import SQL
+import settings
+
 
 class Rss_spider(object):
     '''
@@ -41,8 +43,13 @@ class Rss_spider(object):
         self.SQ=SQL()
         self.SQ.open_datebase()
         self.redis_conn=Redis()
+        self.load_config()
         #run
-        self.latest_and_hot()
+        try:
+            self.latest_and_hot()
+        except APIError as e:
+            print(e)
+            pass
         self.gen_topic_queue()
         #end
         self.SQ.close_datebase()
@@ -71,7 +78,7 @@ class Rss_spider(object):
     
     def latest_and_hot(self):
         for url in self.latest_hot_api:
-            resp=requests.get(url)
+            resp=self.s.get(url)
             if resp.status_code != 200:
                 self.SQ.close_datebase()
                 raise APIError
@@ -87,16 +94,15 @@ class Rss_spider(object):
                 node=topic["node"]["id"]
                 created=topic["created"]
                 n_time=int(time.time())
-                self.SQ.write_to_db(t_id,title,author,author_id,content,content_rendered,replies,node,created,n_time)
+                self.SQ.write_to_db_base(t_id,title,author,author_id,content,content_rendered,replies,node,created,n_time)
             self.SQ.conn.commit()
         return
 
-
     def gen_topic_queue(self):
-        topics_rss=self.topics_id_rss()
         topics_sql=self.topics_id_sqlite()
         if len(topics_sql) <= 2000:
             return
+        topics_rss=self.topics_id_rss()
         # load topics
         if os.path.exists('.topics_all.json'):
             with open('.topics_all.json','r') as f:
@@ -116,29 +122,13 @@ class Rss_spider(object):
         with open('.topics_all.json','w') as f:
             json.dump(topics_all, f)
         return
-              
 
-class SQL(object):
-    def __init__(self):
-        with open('config.json') as f:
-            config_dict=json.load(f)
-        self.database_path=config_dict["database_path"]
-
-    def open_datebase(self):
-        self.conn=sqlite3.connect(self.database_path)
-        self.cursor=self.conn.cursor()
-
-    def close_datebase(self):
-        self.cursor.close()
-        self.conn.commit()
-        self.conn.close()
-    
-    def write_to_db(self,t_id,title,author,author_id,content,content_rendered,replies,node,created,n_time):
-        sql="INSERT INTO TOPIC (ID,title,author,author_id,content,content_rendered,replies,node,created,time) VALUES ( %s );" % ', '.join(['?'] * 10)
-        try:
-            self.cursor.execute(sql,(t_id,title,author,author_id,content,content_rendered,replies,node,created,n_time))
-        except sqlite3.IntegrityError as e:
-            pass
+    def load_config(self):
+        self.proxy_enable=settings.proxy_enable
+        self.s=requests.session()
+        self.s.headers=settings.API_headers
+        if self.proxy_enable:
+            self.s.proxies=settings.proxies
 
 class APIError(ValueError):
     pass

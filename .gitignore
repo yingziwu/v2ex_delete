@@ -105,10 +105,10 @@ ENV/
 #Custom
 .project
 .pydevproject
-config.json
 .cookies.json
 database.db
 .time_log.json
 *~
 dump.rdb
 .topics_all.json
+settings.py

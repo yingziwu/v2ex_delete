@@ -7,7 +7,7 @@ Created on May 9, 2017
 import requests
 from lxml import etree
 import json
-import os
+import settings
 
 class v2ex_log_in(object):
     '''
@@ -22,24 +22,24 @@ class v2ex_log_in(object):
         >>>log_s.log_in()
         >>>log_s.save_cookies()
         '''
-        self.load_config()
-        self.s=requests.session()
-        self.s.headers=self.base_headers
+        self.load_config()       
         return
     
     def load_config(self):
-        if os.path.exists('config.json'):
-            with open('config.json','r') as f:
-                config=json.load(f)
-                self.account=config["account"]
-                self.passwd=config["password"]
-                self.base_headers=config["base_headers"]
-        else:
-            raise FileExistsError
+        self.account=settings.account
+        self.passwd=settings.password
+        self.proxy_enable=settings.proxy_enable
+        self.base_headers=settings.WEB_headers
+        self.s=requests.session()
+        self.s.headers=self.base_headers
+        if self.proxy_enable:
+            self.s.proxies=settings.proxies        
 
     def log_in(self):
         #1
         r1=self.s.get('https://www.v2ex.com/signin')
+        if r1.status_code != 200:
+            raise LogError
         t1=etree.HTML(r1.text)
         text_name=t1.xpath('//input[@type="text"]/@name')[-1]
         password_name=t1.xpath('//input[@type="password"]/@name')[0]

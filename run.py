@@ -7,29 +7,37 @@ import json
 import time
 import sqlite3
 import requests
-import log_in
+from v2ex_base import log_in
 import os
 from redis import Redis
 from rq import Queue
 from v2ex_spider import node_spider
 from v2ex_spider import rss_spider
+from v2ex_base.v2_sql import SQL
+import settings
 
 class Start(object):
     '''
-    classdocs
+    Start the project.
     '''
 
     def __init__(self):
         '''
-        Constructor
+        $ python run.py
+        or
+        $ ./Run.sh
         '''
         self.SQ=SQL()
         self.SQ.open_datebase()
         self.redis_conn=Redis()
+        self.load_config()
         #start
         self.load_time_json()
         self.update_cookies()
-        self.update_nodes()
+        try:
+            self.update_nodes()
+        except APIError as e:
+            print(e)
         self.get_rss()
         self.tasker()
         #end
@@ -51,9 +59,13 @@ class Start(object):
         else:
             cookies_time_status = True        
         if not os.path.exists('cookies.txt') or cookies_time_status is False:
-            log_s=log_in.v2ex_log_in()
-            log_s.log_in()
-            log_s.save_cookies()
+            try:
+                log_s=log_in.v2ex_log_in()
+                log_s.log_in()
+                log_s.save_cookies()
+            except log_in.LogError as e:
+                print(e)
+                return
             self.time_log["cookies_time"]=str(int(time.time()))
         return
     
@@ -63,7 +75,7 @@ class Start(object):
         else:
             nodes_time_status=True
         if not nodes_time_status:
-            resp=requests.get('https://www.v2ex.com/api/nodes/all.json')
+            resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
             if resp.status_code != 200:
                 self.SQ.close_datebase()
                 with open('.time_log.json','w') as f:
@@ -80,9 +92,10 @@ class Start(object):
                 header=node["header"]
                 footer=node["footer"]
                 created=node["created"]
-                sql="REPLACE INTO NODES (ID,name,url,title,title_alternative,topics,header,footer,created) VALUES ( %s );" % ', '.join(['?'] * 9)
+                n_time=int(time.time())
+                sql="REPLACE INTO NODES (ID,name,url,title,title_alternative,topics,header,footer,created,time) VALUES ( %s );" % ', '.join(['?'] * 10)
                 try:
-                    self.SQ.cursor.execute(sql, (n_id,name,url,title,title_alternative,topics,header,footer,created))
+                    self.SQ.cursor.execute(sql, (n_id,name,url,title,title_alternative,topics,header,footer,created,n_time))
                 except sqlite3.IntegrityError as e:
                     pass
             self.SQ.conn.commit()
@@ -124,21 +137,14 @@ class Start(object):
             rss_spider.Rss_spider()
             self.time_log["rss_time"]=str(int(time.time()))
         return
-
-class SQL(object):
-    def __init__(self):
-        with open('config.json') as f:
-            config_dict=json.load(f)
-        self.database_path=config_dict["database_path"]
     
-    def open_datebase(self):
-        self.conn=sqlite3.connect(self.database_path)
-        self.cursor=self.conn.cursor()
-
-    def close_datebase(self):
-        self.cursor.close()
-        self.conn.commit()
-        self.conn.close()
+    def load_config(self):
+        self.proxy_enable=settings.proxy_enable
+        self.s=requests.session()
+        self.s.headers=settings.API_headers
+        if self.proxy_enable:
+            self.s.proxies=settings.proxies        
+        
 
 class APIError(ValueError):
     pass

@@ -1,0 +1,26 @@
+'''
+Created on May 12, 2017
+
+@author: yingziwu
+'''
+## Settings
+# v2ex account
+account='v2ex_account'
+password='v2ex_password'
+# requests headers setting
+WEB_headers_list=[{"User-Agent": "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.04", "Referer": "https://v2ex.com/signin"}]
+API_headers_list=[{"User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5X Build/MDB08L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.124 Mobile Safari/537.36"}]
+# proxy setting
+proxy_enable=True
+proxies_list=[{"http":"socks5://localhost:1080","https":"socks5://localhost:1080"},
+         {"http":"socks5://localhost:8100","https":"socks5://localhost:8100"},
+         {"http":"socks5://localhost:8101","https":"socks5://localhost:8101"},
+         {"http":"socks5://localhost:8101","https":"socks5://localhost:8102"}]
+# database setting
+database_path="/home/arch/python/v2ex_delete/database.db"
+
+## Program
+import random
+proxies=random.choice(proxies_list)
+WEB_headers=random.choice(WEB_headers_list)
+API_headers=random.choice(API_headers_list)
