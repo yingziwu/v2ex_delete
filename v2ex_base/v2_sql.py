@@ -50,3 +50,12 @@ class SQL(object):
             pass
         self.conn.commit()
         return
+    
+    def write_to_db_status(self,T_ID,NODE,STATUS,TIME):
+        sql="INSERT INTO STATUS (T_ID,NODE,STATUS,TIME) VALUES ( %s );" % ', '.join(['?'] * 4)
+        try:
+            self.cursor.execute(sql,(T_ID,NODE,STATUS,TIME))
+        except sqlite3.IntegrityError as e:
+            pass
+        self.conn.commit()
+        return

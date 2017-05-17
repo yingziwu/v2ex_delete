@@ -1,11 +1,6 @@
 requests
 requests[socks]
 lxml
-json
-os
-sqlite3
-time
-re
 redis
 rq
 feedparser

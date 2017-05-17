@@ -14,6 +14,7 @@ from v2ex_spider import node_spider
 from v2ex_spider import rss_spider
 from v2ex_base.v2_sql import SQL
 import settings
+from v2ex_tester import topic_tester
 
 class Start(object):
     '''
@@ -39,6 +40,7 @@ class Start(object):
             print(e)
         self.get_rss()
         self.tasker()
+        self.tester_tasker()
         #end
         self.SQ.close_datebase()
         with open('.time_log.json','w') as f:
@@ -49,7 +51,7 @@ class Start(object):
             with open('.time_log.json','r') as f:
                 self.time_log=json.load(f)
         else:
-            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0'}
+            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0','tester':'0'}
         return
 
     def update_cookies(self):
@@ -139,8 +141,19 @@ class Start(object):
         self.s.headers=settings.API_headers
         if self.proxy_enable:
             self.s.proxies=settings.proxies
-        return      
-        
+        return
+
+    def tester_tasker(self):
+        if int(time.time())-int(self.time_log["tester"]) >= 1800:
+            sql="SELECT ID FROM TOPIC WHERE (time - created) < 86400 AND ID NOT IN (SELECT T_ID FROM STATUS) AND (STRFTIME('%s','now') - time) > 1209600;"
+            sleep_time=20
+            self.SQ.cursor.execute(sql)
+            topic_ids=[x[0] for x in self.SQ.cursor.fetchall()]
+            q=Queue('tester',connection=self.redis_conn)
+            for topic_id in topic_ids:
+                q.enqueue(topic_tester.start,topic_id, sleep_time)
+            self.time_log["tester"]=str(int(time.time()))
+        return
 
 class APIError(ValueError):
     pass

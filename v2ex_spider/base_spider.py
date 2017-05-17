@@ -21,10 +21,10 @@ class spider(object):
         '''
         self.url=url
         self.sleep_time=sleep_time
+        time.sleep(int(self.sleep_time))
         self.SQ=SQL()
         self.SQ.open_datebase()
         #run
-        time.sleep(int(self.sleep_time))
         self.load_config()
         self.spider()
         #end
