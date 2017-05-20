@@ -13,13 +13,14 @@ from v2ex_base.v2_sql import SQL
 
 class tester(object):
     '''
-    classdocs
+    The tester for v2ex topics.
     '''
 
 
     def __init__(self):
         '''
-        Constructor
+        >>>from v2ex_tester import topic_tester
+        >>>topic_tester(topic_id,sleep_time)
         '''
         self.s=requests.session()
         self.s.proxies=settings.proxies
@@ -33,6 +34,7 @@ class tester(object):
             cookies=requests.utils.cookiejar_from_dict(json.load(f))
             self.s.cookies=cookies
         self.s.headers=settings.WEB_headers_list[0]
+        self.log_status=True
         return
     
     def web_test(self,t_id,status):

@@ -145,7 +145,7 @@ class Start(object):
 
     def tester_tasker(self):
         if int(time.time())-int(self.time_log["tester"]) >= 1800:
-            sql="SELECT ID FROM TOPIC WHERE (time - created) < 86400 AND ID NOT IN (SELECT T_ID FROM STATUS) AND (STRFTIME('%s','now') - time) > 1209600;"
+            sql="SELECT ID FROM TOPIC WHERE (time - created) < 172800 AND ID NOT IN (SELECT T_ID FROM STATUS) AND (STRFTIME('%s','now') - time) > 1209600;"
             sleep_time=20
             self.SQ.cursor.execute(sql)
             topic_ids=[x[0] for x in self.SQ.cursor.fetchall()]

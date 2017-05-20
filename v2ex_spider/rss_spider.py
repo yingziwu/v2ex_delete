@@ -117,8 +117,10 @@ class Rss_spider(object):
                 t_queue.enqueue(topic_spider.start,topic_id, self.topic_sleep_time)
         #save topics
         topics_all=list()
+        topics_all.extend(tmp_topics)
         topics_all.extend(topics_rss)
         topics_all.extend(topics_sql)
+        topics_all=list(set(topics_all))
         with open('.topics_all.json','w') as f:
             json.dump(topics_all, f)
         return
