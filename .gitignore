@@ -112,3 +112,4 @@ database.db
 dump.rdb
 .topics_all.json
 settings.py
+.node_number.json
