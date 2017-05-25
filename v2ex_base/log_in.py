@@ -40,7 +40,8 @@ class v2ex_log_in(object):
         #1
         r1=self.s.get('https://www.v2ex.com/signin')
         if r1.status_code != 200:
-            raise LogError
+            error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            raise LogError(error_info)
         self.s.headers={'Referer': 'https://v2ex.com/signin'}
         t1=etree.HTML(r1.text)
         text_name=t1.xpath('//input[@type="text"]/@name')[-1]

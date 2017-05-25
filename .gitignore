@@ -113,3 +113,4 @@ dump.rdb
 .topics_all.json
 settings.py
 .node_number.json
+.topics_tester.json

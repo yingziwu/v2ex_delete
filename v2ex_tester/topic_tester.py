@@ -24,11 +24,13 @@ class tester(object):
         '''
         self.s=requests.session()
         self.s.proxies=settings.proxies
-        self.SQ=SQL()
-        self.SQ.open_datebase()
         self.s.headers=settings.WEB_headers
         self.log_status=False
-        
+    
+    def init_database(self):
+        self.SQ=SQL()
+        self.SQ.open_datebase()
+     
     def log_in(self):
         with open('.cookies.json','r') as f:
             cookies=requests.utils.cookiejar_from_dict(json.load(f))
@@ -61,6 +63,9 @@ class tester(object):
         url='https://www.v2ex.com/api/topics/show.json?id=%s' % str(t_id)
         n_time=int(time.time())
         resp=self.s_a.get(url)
+        if resp.status_code != 200:
+            error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            raise APIError(error_info)
         topic=resp.json()[0]
         node_id=topic["node"]["id"]
         return {'T_ID':int(t_id),'NODE':node_id,'STATUS':status,'TIME':n_time}
@@ -68,10 +73,14 @@ class tester(object):
     def write_to_sql(self,T_ID, NODE, STATUS, TIME):
         self.SQ.write_to_db_status(T_ID, NODE, STATUS, TIME)
         return
+
+class APIError(ValueError):
+    pass
     
 def start(t_id,sleep_time):
     time.sleep(sleep_time)
     t=tester()
+    t.init_database()
     result=t.web_test(t_id, 0)
     t.write_to_sql(result['T_ID'],result['NODE'],result['STATUS'],result['TIME'])
     t.SQ.close_datebase()

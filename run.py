@@ -43,11 +43,11 @@ class Start(object):
         self.tester_tasker()
         #end
         self.end()
-    
+
     def end(self):
         self.SQ.close_datebase()
         self.dump_json()
-        
+
     def load_json(self):
         #load .time_log.json
         if os.path.exists('.time_log.json'):
@@ -62,7 +62,7 @@ class Start(object):
         else:
             self.node_number=list()
         return
-    
+
     def dump_json(self):
         #dump .time_log.json
         with open('.time_log.json','w') as f1:
@@ -77,7 +77,7 @@ class Start(object):
         if int(time.time())-int(self.time_log["cookies_time"]) >= 86400:
             cookies_time_status = False
         else:
-            cookies_time_status = True        
+            cookies_time_status = True
         if not os.path.exists('cookies.txt') or cookies_time_status is False:
             try:
                 log_s=log_in.v2ex_log_in()
@@ -88,17 +88,17 @@ class Start(object):
                 return
             self.time_log["cookies_time"]=str(int(time.time()))
         return
-    
+
     def update_nodes(self):
-        if int(time.time())-int(self.time_log["nodes_time"]) >= 18000:
+        if int(time.time())-int(self.time_log["nodes_time"]) >= 10800:
             nodes_time_status=False
         else:
             nodes_time_status=True
         if not nodes_time_status:
             resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
             if resp.status_code != 200:
-                self.end()
-                raise APIError
+                error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+                raise APIError(error_info)
             nodes=resp.json()
             for node in nodes:
                 n_id=node["id"]
@@ -117,7 +117,7 @@ class Start(object):
             self.time_log["nodes_time"]=str(int(time.time()))
         self.node_number=list(set(self.node_number))
         return
-        
+
     def tasker(self):
         node_configs_1=[{'sql':'SELECT ID FROM NODES WHERE topics >= 8000;','sleep_time':5,'between_time':900,'time_log':'8000_node','queue_name':'node1'},
                       {'sql':'SELECT ID FROM NODES WHERE topics BETWEEN 3000 AND 8000;','sleep_time':10,'between_time':1800,'time_log':'4000_node','queue_name':'node2'},
@@ -152,13 +152,13 @@ class Start(object):
                         q_node.enqueue(node_spider.start,node_id,sleep_time)
                 self.time_log[time_log_name]=str(int(time.time()))
         return
-    
+
     def get_rss(self):
         if int(time.time())-int(self.time_log["rss_time"]) >= 600:
             rss_spider.Rss_spider()
             self.time_log["rss_time"]=str(int(time.time()))
         return
-    
+
     def load_config(self):
         self.proxy_enable=settings.proxy_enable
         self.s=requests.session()
@@ -169,13 +169,26 @@ class Start(object):
 
     def tester_tasker(self):
         if int(time.time())-int(self.time_log["tester"]) >= 1800:
-            sql="SELECT ID FROM TOPIC WHERE (time - created) < 172800 AND ID NOT IN (SELECT T_ID FROM STATUS) AND (STRFTIME('%s','now') - time) > 1209600;"
+            #losd json
+            if os.path.exists('.topics_tester.json'):
+                with open('.topics_tester.json','r') as f:
+                    tmp_topics=json.load(f)
+            else:
+                tmp_topics=list()
+            #main
+            sql="SELECT ID FROM TOPIC WHERE (time - created) < 345600 AND ID NOT IN (SELECT T_ID FROM STATUS) AND (STRFTIME('%s','now') - created) > 1209600;"
             sleep_time=20
             self.SQ.cursor.execute(sql)
             topic_ids=[x[0] for x in self.SQ.cursor.fetchall()]
             q=Queue('tester',connection=self.redis_conn)
             for topic_id in topic_ids:
-                q.enqueue(topic_tester.start,topic_id, sleep_time)
+                if topic_id not in tmp_topics:
+                    q.enqueue(topic_tester.start,topic_id, sleep_time)
+                    tmp_topics.append(topic_id)
+            #end
+            tmp_topics=list(set(tmp_topics))
+            with open('.topics_tester.json','w') as f:
+                json.dump(tmp_topics,f)
             self.time_log["tester"]=str(int(time.time()))
         return
 

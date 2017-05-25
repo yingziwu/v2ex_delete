@@ -34,7 +34,8 @@ class spider(object):
         resp=self.s.get(self.url)
         if resp.status_code != 200:
             self.SQ.close_datebase()
-            raise APIError
+            error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            raise APIError(error_info)
         topics=resp.json()
         for topic in topics:
             t_id=topic["id"]
