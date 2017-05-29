@@ -145,8 +145,8 @@ class Start(object):
                 self.SQ.cursor.execute(sql)
                 node_ids=self.SQ.cursor.fetchall()
                 for node_id in node_ids:
+                    node_id=node_id[0]
                     if queue_name != 'node5' or (queue_name == 'node5' and node_id in self.node_number):
-                        node_id=node_id[0]
                         if queue_name == 'node5':
                             self.node_number.remove(int(node_id))
                         q_node.enqueue(node_spider.start,node_id,sleep_time)
