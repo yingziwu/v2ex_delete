@@ -43,7 +43,10 @@ class tester(object):
         url='https://www.v2ex.com/t/%s' % str(t_id)
         n_time=int(time.time())
         resp=self.s.get(url)
-        if '404 Topic Not Found' in resp.text:
+        if resp.status_code == 403:
+            error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            raise APIError(error_info)
+        if resp.status_code == 404 and '404 Topic Not Found' in resp.text :
             return {'T_ID':int(t_id),'NODE':None,'STATUS':3,'TIME':n_time}
         if resp.url == 'https://www.v2ex.com/':
             return self.api_test(t_id, status=2)
@@ -87,5 +90,6 @@ def start(t_id,sleep_time):
     return
 
 if __name__ == '__main__':
-    start(1,5)
+#     start(1,5)
+    start(362574,5)
     print('finish!')
