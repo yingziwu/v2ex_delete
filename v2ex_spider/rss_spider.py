@@ -9,9 +9,10 @@ import re
 import requests
 from redis import Redis
 from rq import Queue
-from v2ex_spider import topic_spider
 import json
 import os
+
+from v2ex_spider import topic_spider
 from v2ex_base.v2_sql import SQL
 import settings
 
@@ -78,7 +79,12 @@ class Rss_spider(object):
     
     def latest_and_hot(self):
         for url in self.latest_hot_api:
-            resp=self.s.get(url)
+            try:
+                resp=self.s.get(url)
+            except requests.exceptions.RequestException as e:
+                print(self.s.proxies)
+                print(e)
+                raise e
             if resp.status_code != 200:
                 self.SQ.close_datebase()
                 error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
@@ -131,7 +137,7 @@ class Rss_spider(object):
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies
+            self.s.proxies=settings.proxies()
 
 class APIError(ValueError):
     pass

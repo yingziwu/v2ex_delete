@@ -5,11 +5,12 @@ Created on May 9, 2017
 '''
 import requests
 import json
-import settings
 from lxml import etree
 import time
 import re
+
 from v2ex_base.v2_sql import SQL
+import settings
 
 class tester(object):
     '''
@@ -23,7 +24,7 @@ class tester(object):
         >>>topic_tester(topic_id,sleep_time)
         '''
         self.s=requests.session()
-        self.s.proxies=settings.proxies
+        self.s.proxies=settings.proxies()
         self.s.headers=settings.WEB_headers
         self.log_status=False
     
@@ -61,7 +62,7 @@ class tester(object):
     
     def api_test(self,t_id,status): 
         self.s_a=requests.session() 
-        self.s_a.proxies=settings.proxies
+        self.s_a.proxies=settings.proxies()
         self.s_a.headers=settings.API_headers
         url='https://www.v2ex.com/api/topics/show.json?id=%s' % str(t_id)
         n_time=int(time.time())

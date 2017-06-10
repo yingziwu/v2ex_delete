@@ -7,6 +7,7 @@ Created on May 9, 2017
 import requests
 from lxml import etree
 import json
+
 import settings
 
 class v2ex_log_in(object):
@@ -33,12 +34,21 @@ class v2ex_log_in(object):
         self.s=requests.session()
         self.s.headers=self.base_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies
+            self.s.proxies=settings.proxies()
         return
 
-    def log_in(self):
+    def log_in(self,try_time):
+        if try_time >= 4:
+            print(self.s.proxies)
+            raise LogError('try time too much.')
         #1
-        r1=self.s.get('https://www.v2ex.com/signin')
+        try:
+            r1=self.s.get('https://www.v2ex.com/signin')
+        except requests.exceptions.RequestException as e:
+            print(self.s.proxies)
+            print(e)
+            try_time=try_time+1
+            return self.log_in(try_time)
         if r1.status_code != 200:
             error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
             raise LogError(error_info)
@@ -49,7 +59,13 @@ class v2ex_log_in(object):
         once1=t1.xpath('//input[@type="hidden"]/@value')[0]
         post_data={text_name:self.account, password_name:self.passwd, 'once':str(once1), 'next':'/'}
         #r2
-        r2=self.s.post('https://www.v2ex.com/signin', data=post_data)
+        try:
+            r2=self.s.post('https://www.v2ex.com/signin', data=post_data)
+        except requests.exceptions.RequestException as e:
+            print(self.s.proxies)
+            print(e)
+            try_time=try_time+1
+            return self.log_in(try_time)            
         return
         
     def save_cookies(self):
@@ -65,7 +81,7 @@ class LogError(ValueError):
     
 if __name__ == '__main__':
     tmp=v2ex_log_in()
-    tmp.log_in()
+    tmp.log_in(1)
     tmp.save_cookies()
     print('finish!')
     

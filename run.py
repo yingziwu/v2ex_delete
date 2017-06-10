@@ -6,15 +6,16 @@ Created on May 9, 2017
 import json
 import time
 import requests
-from v2ex_base import log_in
 import os
 from redis import Redis
 from rq import Queue
+
 from v2ex_spider import node_spider
 from v2ex_spider import rss_spider
 from v2ex_base.v2_sql import SQL
-import settings
 from v2ex_tester import topic_tester
+from v2ex_base import log_in
+import settings
 
 class Start(object):
     '''
@@ -81,7 +82,7 @@ class Start(object):
         if not os.path.exists('cookies.txt') or cookies_time_status is False:
             try:
                 log_s=log_in.v2ex_log_in()
-                log_s.log_in()
+                log_s.log_in(1)
                 log_s.save_cookies()
             except log_in.LogError as e:
                 print(e)
@@ -95,7 +96,12 @@ class Start(object):
         else:
             nodes_time_status=True
         if not nodes_time_status:
-            resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
+            try:
+                resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
+            except requests.exceptions.RequestException as e:
+                print(self.s.proxies)
+                print(e)
+                return
             if resp.status_code != 200:
                 error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
                 raise APIError(error_info)
@@ -155,7 +161,10 @@ class Start(object):
 
     def get_rss(self):
         if int(time.time())-int(self.time_log["rss_time"]) >= 600:
-            rss_spider.Rss_spider()
+            try:
+                rss_spider.Rss_spider()
+            except requests.exceptions.RequestException as e:
+                return
             self.time_log["rss_time"]=str(int(time.time()))
         return
 
@@ -164,7 +173,7 @@ class Start(object):
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies
+            self.s.proxies=settings.proxies()
         return
 
     def tester_tasker(self):
