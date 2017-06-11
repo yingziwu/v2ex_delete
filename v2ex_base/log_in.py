@@ -29,12 +29,12 @@ class v2ex_log_in(object):
     def load_config(self):
         self.account=settings.account
         self.passwd=settings.password
-        self.proxy_enable=settings.proxy_enable
-        self.base_headers=settings.WEB_headers_list[0]
+        self.proxy_enable=settings.i_proxy_enable
+        self.base_headers=settings.WEB_headers
         self.s=requests.session()
         self.s.headers=self.base_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies()
+            self.s.proxies=settings.i_proxies()
         return
 
     def log_in(self,try_time):
@@ -50,7 +50,7 @@ class v2ex_log_in(object):
             try_time=try_time+1
             return self.log_in(try_time)
         if r1.status_code != 200:
-            error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            error_info='proxy status: %s, proxy: %s' % (str(settings.i_proxy_enable),str(self.s.proxies))
             raise LogError(error_info)
         self.s.headers={'Referer': 'https://v2ex.com/signin'}
         t1=etree.HTML(r1.text)

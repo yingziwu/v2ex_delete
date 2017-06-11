@@ -103,7 +103,7 @@ class Start(object):
                 print(e)
                 return
             if resp.status_code != 200:
-                error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+                error_info='proxy status: %s, proxy: %s' % (str(settings.i_proxy_enable),str(self.s.proxies))
                 raise APIError(error_info)
             nodes=resp.json()
             for node in nodes:
@@ -169,11 +169,11 @@ class Start(object):
         return
 
     def load_config(self):
-        self.proxy_enable=settings.proxy_enable
+        self.proxy_enable=settings.i_proxy_enable
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies()
+            self.s.proxies=settings.i_proxies()
         return
 
     def tester_tasker(self):

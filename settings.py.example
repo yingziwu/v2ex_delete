@@ -7,23 +7,39 @@ Created on May 12, 2017
 ## v2ex account
 account='v2ex_account'  #v2ex帐号
 password='v2ex_password'    #v2ex密码
-## requests headers setting
-### WEB_headers_list：访问v2ex网页版时使用的header池。无需登录页面从列表中随机抽取，需要登录页面使用列表中第一个。
-WEB_headers_list=[{"User-Agent": "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.04", "Referer": "https://v2ex.com/signin"},
-                {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Gecko/20100101 Firefox/36.04", "Referer": "https://v2ex.com/signin"}]
-### API_headers_list：调用v2ex API时使用的header池。
-API_headers_list=[{"User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5X Build/MDB08L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.124 Mobile Safari/537.36"},
-                {"User-Agent": "Mozilla/5.0 (Linux; Android 7.0; Nexus 9 Build/NRD90R) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.124 Safari/537.36"}]
+
+## User-Agent setting
+### WEB_User_Agents：访问v2ex网页版时使用的UA池。请自行添加
+WEB_User_Agents=['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2869.0 Safari/537.36']
+### API_User_Agents：调用v2ex API时使用的UA池。请自行添加
+API_User_Agents=['Mozilla/5.0 (Linux; Android 6.0; Nexus 5X Build/MDB08L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.124 Mobile Safari/537.36']
+
+
 ## proxy setting
-proxy_enable=False   #是否使用代理，默认值为不使用。
+proxy_enable=False   #是否对一般请求使用代理，默认值为不使用。
 ### proxies_list：代理池，具体说明详见：http://docs.python-requests.org/en/master/user/advanced/#proxies
 proxies_list=[{"http":"socks5://localhost:1080","https":"socks5://localhost:1080"},
          {"http":"http://localhost:8090","https":"http://localhost:8090"},]
+
+i_proxy_enable=False    #是否对重要请求使用代理，默认值为不使用。（run.py、log_in.py、rss_spider.py为重要请求）
+i_proxies_list=[{"http":"socks5://127.0.0.1:1080","https":"socks5://127.0.0.1:1080"}]
+
 ## database setting
 database_path="/home/arch/python/v2ex_delete/database.db"   #sqlite数据库路径
 
 # Program
 import random
-proxies=random.choice(proxies_list)
-WEB_headers=random.choice(WEB_headers_list)
-API_headers=random.choice(API_headers_list)
+WEB_headers={'Accept':"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+             'Accept-Encoding':"gzip, deflate",
+             'Accept-Language':"zh-CN,zh;q=0.8",
+             'User-Agent':random.choice(WEB_User_Agents)}
+API_headers={'Accept':"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+             'Accept-Encoding':"gzip, deflate",
+             'Accept-Language':"zh-CN,zh;q=0.8",
+             'User-Agent':random.choice(API_User_Agents)}
+
+def proxies():
+    return random.choice(proxies_list)
+
+def i_proxies():
+    return random.choice(i_proxies_list)

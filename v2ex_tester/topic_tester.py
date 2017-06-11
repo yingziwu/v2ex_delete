@@ -36,7 +36,7 @@ class tester(object):
         with open('.cookies.json','r') as f:
             cookies=requests.utils.cookiejar_from_dict(json.load(f))
             self.s.cookies=cookies
-        self.s.headers=settings.WEB_headers_list[0]
+        self.s.headers=settings.WEB_headers
         self.log_status=True
         return
     

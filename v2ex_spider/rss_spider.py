@@ -87,7 +87,7 @@ class Rss_spider(object):
                 raise e
             if resp.status_code != 200:
                 self.SQ.close_datebase()
-                error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+                error_info='proxy status: %s, proxy: %s' % (str(settings.i_proxy_enable),str(self.s.proxies))
                 raise APIError(error_info)
             topics=resp.json()
             for topic in topics:
@@ -133,11 +133,11 @@ class Rss_spider(object):
         return
 
     def load_config(self):
-        self.proxy_enable=settings.proxy_enable
+        self.proxy_enable=settings.i_proxy_enable
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies()
+            self.s.proxies=settings.i_proxies()
 
 class APIError(ValueError):
     pass
