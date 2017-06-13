@@ -24,7 +24,8 @@ class tester(object):
         >>>topic_tester(topic_id,sleep_time)
         '''
         self.s=requests.session()
-        self.s.proxies=settings.proxies()
+        if settings.proxy_enable is True:
+            self.s.proxies=settings.proxies()
         self.s.headers=settings.WEB_headers
         self.log_status=False
     
@@ -52,8 +53,9 @@ class tester(object):
         if resp.url == 'https://www.v2ex.com/':
             return self.api_test(t_id, status=2)
         if 'signin' in resp.url and self.log_status is False:
-            self.log_in()
-            return self.web_test(t_id, status=1)
+#             self.log_in()
+#             return self.web_test(t_id, status=1)
+            return self.api_test(t_id, status=1)
         tree=etree.HTML(resp.text)
         node_name=re.findall(r'\/go\/(\w+)', tree.xpath('//div[@class="header"]/a[2]/@href')[0])[0]
         self.SQ.cursor.execute("SELECT ID FROM NODES WHERE name == '%s';" % node_name)
@@ -61,8 +63,9 @@ class tester(object):
         return {'T_ID':int(t_id),'NODE':node_id,'STATUS':status,'TIME':n_time}
     
     def api_test(self,t_id,status): 
-        self.s_a=requests.session() 
-        self.s_a.proxies=settings.proxies()
+        self.s_a=requests.session()
+        if settings.proxy_enable is True:
+            self.s_a.proxies=settings.proxies()
         self.s_a.headers=settings.API_headers
         url='https://www.v2ex.com/api/topics/show.json?id=%s' % str(t_id)
         n_time=int(time.time())
@@ -92,5 +95,5 @@ def start(t_id,sleep_time):
 
 if __name__ == '__main__':
 #     start(1,5)
-    start(362574,5)
+    start(364641,5)
     print('finish!')

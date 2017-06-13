@@ -11,6 +11,7 @@ from redis import Redis
 from rq import Queue
 import json
 import os
+import logging
 
 from v2ex_spider import topic_spider
 from v2ex_base.v2_sql import SQL
@@ -30,6 +31,7 @@ class Rss_spider(object):
         >>>from v2ex_spider import rss_spider
         >>>rss_spider.Rss_spider()
         '''
+        logging.info('start Rss spider')
         self.v2ex_rss_url_list=['https://www.v2ex.com/index.xml',
                    'https://www.v2ex.com/feed/tab/qna.xml',
                    'https://www.v2ex.com/feed/tab/jobs.xml',
@@ -41,6 +43,7 @@ class Rss_spider(object):
                    'https://www.v2ex.com/feed/tab/tech.xml']
         self.latest_hot_api=['https://www.v2ex.com/api/topics/latest.json','https://www.v2ex.com/api/topics/hot.json']
         self.topic_sleep_time=10
+        logging.debug('open sql database')
         self.SQ=SQL()
         self.SQ.open_datebase()
         self.redis_conn=Redis()
@@ -49,16 +52,18 @@ class Rss_spider(object):
         try:
             self.latest_and_hot()
         except APIError as e:
-            print(e)
             pass
         self.gen_topic_queue()
         #end
         self.SQ.close_datebase()
+        logging.info('end the Rss spider')
     
     def topics_id_rss(self):
+        logging.debug('fetch rss feeds')
         topic_ids=list()
         for v2ex_rss_url in self.v2ex_rss_url_list:
             feed=feedparser.parse(v2ex_rss_url)
+            logging.debug('fetch rss feed: %s' % v2ex_rss_url)
             items=feed["items"]
             for item in items:
                 author=item["author"]
@@ -72,23 +77,31 @@ class Rss_spider(object):
         return topic_ids
 
     def topics_id_sqlite(self):
+        logging.debug('SELECT ID FROM TOPIC')
         sql='SELECT ID FROM TOPIC;'
         self.SQ.cursor.execute(sql)
         topics_ids=[x[0] for x in self.SQ.cursor.fetchall()]
         return  topics_ids
     
     def latest_and_hot(self):
+        logging.debug('start latest_and_hot')
         for url in self.latest_hot_api:
             try:
                 resp=self.s.get(url)
             except requests.exceptions.RequestException as e:
-                print(self.s.proxies)
-                print(e)
+                logging.error('latest_and_hot error')
+                logging.error('proxy_status: %s' % self.proxy_enable)
+                if self.proxy_enable is True:
+                    logging.error('proxy: %s' % self.s.proxies)
+                logging.error(e)
                 raise e
             if resp.status_code != 200:
-                self.SQ.close_datebase()
-                error_info='proxy status: %s, proxy: %s' % (str(settings.i_proxy_enable),str(self.s.proxies))
-                raise APIError(error_info)
+                logging.error('latest_and_hot error')
+                logging.error('proxy_status: %s' % self.proxy_enable)
+                if self.proxy_enable is True:
+                    logging.error('proxy: %s' % self.s.proxies)
+                logging.error(APIError('latest_and_hot'))
+                raise APIError('latest_and_hot')
             topics=resp.json()
             for topic in topics:
                 t_id=topic["id"]
@@ -106,6 +119,7 @@ class Rss_spider(object):
         return
 
     def gen_topic_queue(self):
+        logging.debug('start topic enqueue')
         topics_sql=self.topics_id_sqlite()
         if len(topics_sql) <= 2000:
             return
@@ -133,6 +147,7 @@ class Rss_spider(object):
         return
 
     def load_config(self):
+        logging.debug('load config')
         self.proxy_enable=settings.i_proxy_enable
         self.s=requests.session()
         self.s.headers=settings.API_headers

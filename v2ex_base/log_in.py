@@ -7,6 +7,7 @@ Created on May 9, 2017
 import requests
 from lxml import etree
 import json
+import logging
 
 import settings
 
@@ -23,10 +24,12 @@ class v2ex_log_in(object):
         >>>log_s.log_in()
         >>>log_s.save_cookies()
         '''
+        logging.info('start log in')
         self.load_config()       
         return
     
     def load_config(self):
+        logging.debug('start load_config')
         self.account=settings.account
         self.passwd=settings.password
         self.proxy_enable=settings.i_proxy_enable
@@ -38,15 +41,20 @@ class v2ex_log_in(object):
         return
 
     def log_in(self,try_time):
+        logging.debug('start log_in')
         if try_time >= 4:
-            print(self.s.proxies)
+            logging.error(LogError('try time too much.'))
             raise LogError('try time too much.')
         #1
         try:
             r1=self.s.get('https://www.v2ex.com/signin')
         except requests.exceptions.RequestException as e:
-            print(self.s.proxies)
-            print(e)
+            logging.error('log in error')
+            logging.error(try_time)
+            logging.error('proxy status: %s' % self.proxy_enable)
+            if self.proxy_enable is True:
+                logging.error('proxy: %s' % self.s.proxies)
+            logging.error(e)
             try_time=try_time+1
             return self.log_in(try_time)
         if r1.status_code != 200:
@@ -62,13 +70,18 @@ class v2ex_log_in(object):
         try:
             r2=self.s.post('https://www.v2ex.com/signin', data=post_data)
         except requests.exceptions.RequestException as e:
-            print(self.s.proxies)
-            print(e)
+            logging.error('log in error')
+            logging.error(try_time)
+            logging.error('proxy status: %s' % self.proxy_enable)
+            if self.proxy_enable is True:
+                logging.error('proxy: %s' % self.s.proxies)
+            logging.error(e)
             try_time=try_time+1
             return self.log_in(try_time)            
         return
         
     def save_cookies(self):
+        logging.debug('start save_cookies')
         resp=self.s.get('https://www.v2ex.com/go/flamewar')
         if '登录' in resp.text:
             raise LogError('log failed.')
