@@ -4,7 +4,7 @@ Created on May 12, 2017
 @author: yingziwu
 '''
 # Settings
-## v2ex account
+## v2ex account #建议使用小号
 account='v2ex_account'  #v2ex帐号
 password='v2ex_password'    #v2ex密码
 
@@ -26,6 +26,14 @@ i_proxies_list=[{"http":"socks5://127.0.0.1:1080","https":"socks5://127.0.0.1:10
 
 ## database setting
 database_path="/home/arch/python/v2ex_delete/database.db"   #sqlite数据库路径
+
+## log
+import logging
+log_level=logging.INFO #log等级
+log_path='log/run.log' #主线程 log路径
+
+## mode (Mode1 or Mode2)
+mode='Mode1' #抓取模式
 
 # Program
 import random

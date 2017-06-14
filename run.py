@@ -16,10 +16,11 @@ from v2ex_spider import rss_spider
 from v2ex_base.v2_sql import SQL
 from v2ex_tester import topic_tester
 from v2ex_base import log_in
+import topic_id_reenqueue
 import settings
 
 logging.basicConfig(level=settings.log_level,
-                    filename='log/run.log',filemode='a',
+                    filename=settings.log_path,filemode='a',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 class Start(object):
@@ -51,6 +52,18 @@ class Start(object):
             pass
         self.get_rss()
         self.tasker()
+        self.topic_ids_enqueue()
+        self.tester_tasker()
+        #end
+        self.end()
+
+    def Mode2(self):
+        logging.info('start mode2')
+        #start
+        self.load_json()
+#         self.update_cookies()
+        self.get_rss()
+        self.topic_ids_enqueue()
         self.tester_tasker()
         #end
         self.end()
@@ -67,7 +80,8 @@ class Start(object):
             with open('.time_log.json','r') as f:
                 self.time_log=json.load(f)
         else:
-            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0','tester':'0'}
+            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0','tester':'0',
+                           'topic_id_reenqueue':'0'}
         #load .node_number.json
         if os.path.exists('.node_number.json'):
             with open('.node_number.json','r') as f:
@@ -84,6 +98,14 @@ class Start(object):
         with open('.node_number.json','w') as f2:
             self.node_number=list(set(self.node_number))
             json.dump(self.node_number,f2)
+        return
+
+    def topic_ids_enqueue(self):
+        if int(time.time())-int(self.time_log['topic_id_reenqueue']) >= 1800:
+            logging.info('start topic id reenqueue')
+            max_id=topic_id_reenqueue.max_id
+            topic_id_reenqueue.reenqueue_m(max_id-2000, max_id-29)
+            self.time_log['topic_id_reenqueue']=str(int(time.time()))
         return
 
     def update_cookies(self):
@@ -175,8 +197,8 @@ class Start(object):
                 node_ids=self.SQ.cursor.fetchall()
                 for node_id in node_ids:
                     node_id=node_id[0]
-                    if queue_name != 'node5' or (queue_name == 'node5' and node_id in self.node_number):
-                        if queue_name == 'node5':
+                    if queue_name not in ['node4','node5'] or (queue_name in ['node4','node5'] and node_id in self.node_number):
+                        if queue_name in ['node4','node5']:
                             self.node_number.remove(int(node_id))
                         q_node.enqueue(node_spider.start,node_id,sleep_time)
                 self.time_log[time_log_name]=str(int(time.time()))
@@ -233,5 +255,7 @@ class APIError(ValueError):
 
 if __name__ == '__main__':
     S=Start()
-    S.Mode1()
-    
+    if settings.mode == 'Mode1':
+        S.Mode1()
+    elif settings.mode == 'Mode2':
+        S.Mode2()
