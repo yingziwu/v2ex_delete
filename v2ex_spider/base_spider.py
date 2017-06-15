@@ -57,7 +57,7 @@ class spider(object):
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies
+            self.s.proxies=settings.proxies()
         return
 
 class APIError(ValueError):

@@ -6,15 +6,22 @@ Created on May 9, 2017
 import json
 import time
 import requests
-from v2ex_base import log_in
 import os
 from redis import Redis
 from rq import Queue
+import logging
+
 from v2ex_spider import node_spider
 from v2ex_spider import rss_spider
 from v2ex_base.v2_sql import SQL
-import settings
 from v2ex_tester import topic_tester
+from v2ex_base import log_in
+import topic_id_reenqueue
+import settings
+
+logging.basicConfig(level=settings.log_level,
+                    filename=settings.log_path,filemode='a',
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 class Start(object):
     '''
@@ -27,19 +34,36 @@ class Start(object):
         or
         $ ./Run.sh
         '''
+        logging.info('start')
+        logging.debug('open sql database.')
         self.SQ=SQL()
         self.SQ.open_datebase()
         self.redis_conn=Redis()
         self.load_config()
+
+    def Mode1(self):
+        logging.info('start mode1')
         #start
         self.load_json()
-        self.update_cookies()
+#         self.update_cookies()
         try:
             self.update_nodes()
         except APIError as e:
-            print(e)
+            pass
         self.get_rss()
         self.tasker()
+        self.topic_ids_enqueue()
+        self.tester_tasker()
+        #end
+        self.end()
+
+    def Mode2(self):
+        logging.info('start mode2')
+        #start
+        self.load_json()
+#         self.update_cookies()
+        self.get_rss()
+        self.topic_ids_enqueue()
         self.tester_tasker()
         #end
         self.end()
@@ -47,14 +71,17 @@ class Start(object):
     def end(self):
         self.SQ.close_datebase()
         self.dump_json()
+        logging.info('end')
 
     def load_json(self):
+        logging.debug('load json')
         #load .time_log.json
         if os.path.exists('.time_log.json'):
             with open('.time_log.json','r') as f:
                 self.time_log=json.load(f)
         else:
-            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0','tester':'0'}
+            self.time_log={'cookies_time':'0','nodes_time':'0','8000_node':'0','4000_node':'0','1000_node':'0','500_node':'0','0_node':'0','rss_time':'0','tester':'0',
+                           'topic_id_reenqueue':'0'}
         #load .node_number.json
         if os.path.exists('.node_number.json'):
             with open('.node_number.json','r') as f:
@@ -73,18 +100,26 @@ class Start(object):
             json.dump(self.node_number,f2)
         return
 
+    def topic_ids_enqueue(self):
+        if int(time.time())-int(self.time_log['topic_id_reenqueue']) >= 1800:
+            logging.info('start topic id reenqueue')
+            max_id=topic_id_reenqueue.max_id
+            topic_id_reenqueue.reenqueue_m(max_id-2000, max_id-29)
+            self.time_log['topic_id_reenqueue']=str(int(time.time()))
+        return
+
     def update_cookies(self):
-        if int(time.time())-int(self.time_log["cookies_time"]) >= 86400:
+        if int(time.time())-int(self.time_log["cookies_time"]) >= 86400 * 4:
             cookies_time_status = False
         else:
             cookies_time_status = True
         if not os.path.exists('cookies.txt') or cookies_time_status is False:
+            logging.debug('update cookies')
             try:
                 log_s=log_in.v2ex_log_in()
-                log_s.log_in()
+                log_s.log_in(3)
                 log_s.save_cookies()
             except log_in.LogError as e:
-                print(e)
                 return
             self.time_log["cookies_time"]=str(int(time.time()))
         return
@@ -95,10 +130,25 @@ class Start(object):
         else:
             nodes_time_status=True
         if not nodes_time_status:
-            resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
+            logging.info('update nodes')
+            try:
+                resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
+            except requests.exceptions.RequestException as e:
+                logging.error('update_node failed.')
+                logging.error('proxy_status: %s' % settings.i_proxy_enable)
+                if settings.i_proxy_enable is True:
+                    logging.error('proxy: %s' % self.s.proxies)
+                logging.error(e)
+                self.node_number=list(set(self.node_number))
+                return
             if resp.status_code != 200:
-                error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
-                raise APIError(error_info)
+                logging.error('update_node failed.')
+                logging.error('proxy_status: %s' % settings.i_proxy_enable)
+                if settings.i_proxy_enable is True:
+                    logging.error('proxy: %s' % self.s.proxies)
+                logging.error(APIError('update_node'))
+                self.node_number=list(set(self.node_number))
+                raise APIError('update_node')
             nodes=resp.json()
             for node in nodes:
                 n_id=node["id"]
@@ -142,12 +192,13 @@ class Start(object):
             queue_name=node_config['queue_name']
             q_node=Queue(queue_name,connection=self.redis_conn)
             if int(time.time()) - int(self.time_log[time_log_name]) >= between_time:
+                logging.info('start enqueue, queue name: %s' % queue_name)
                 self.SQ.cursor.execute(sql)
                 node_ids=self.SQ.cursor.fetchall()
                 for node_id in node_ids:
                     node_id=node_id[0]
-                    if queue_name != 'node5' or (queue_name == 'node5' and node_id in self.node_number):
-                        if queue_name == 'node5':
+                    if queue_name not in ['node4','node5'] or (queue_name in ['node4','node5'] and node_id in self.node_number):
+                        if queue_name in ['node4','node5']:
                             self.node_number.remove(int(node_id))
                         q_node.enqueue(node_spider.start,node_id,sleep_time)
                 self.time_log[time_log_name]=str(int(time.time()))
@@ -155,20 +206,27 @@ class Start(object):
 
     def get_rss(self):
         if int(time.time())-int(self.time_log["rss_time"]) >= 600:
-            rss_spider.Rss_spider()
+            logging.debug('start get_rss')
+            try:
+                rss_spider.Rss_spider()
+            except requests.exceptions.RequestException as e:
+                self.time_log["rss_time"]=str(int(time.time()))
+                return
             self.time_log["rss_time"]=str(int(time.time()))
         return
 
     def load_config(self):
-        self.proxy_enable=settings.proxy_enable
+        logging.debug('load config')
+        self.proxy_enable=settings.i_proxy_enable
         self.s=requests.session()
         self.s.headers=settings.API_headers
         if self.proxy_enable:
-            self.s.proxies=settings.proxies
+            self.s.proxies=settings.i_proxies()
         return
 
     def tester_tasker(self):
         if int(time.time())-int(self.time_log["tester"]) >= 1800:
+            logging.info('start enqueue tester')
             #losd json
             if os.path.exists('.topics_tester.json'):
                 with open('.topics_tester.json','r') as f:
@@ -197,4 +255,7 @@ class APIError(ValueError):
 
 if __name__ == '__main__':
     S=Start()
-    print('Finsh!')
+    if settings.mode == 'Mode1':
+        S.Mode1()
+    elif settings.mode == 'Mode2':
+        S.Mode2()
