@@ -5,6 +5,8 @@ Created on May 12, 2017
 '''
 import requests
 import time
+import logging
+
 from v2ex_base.v2_sql import SQL
 import settings
 
@@ -19,6 +21,7 @@ class spider(object):
         >>>from v2ex_spider import base_spider
         >>>base_spider.start(url,sleep_time)
         '''
+        logging.info('Start base spider. Url is %s' % url)
         self.url=url
         self.sleep_time=sleep_time
         time.sleep(int(self.sleep_time))
@@ -28,13 +31,24 @@ class spider(object):
         self.load_config()
         self.spider()
         #end
-        self.SQ.close_datebase()    
+        self.SQ.close_datebase()
+        logging.info('Spider Finished.') 
         
     def spider(self):
-        resp=self.s.get(self.url)
+        logging.debug('start spider.')
+        try:
+            resp=self.s.get(self.url)
+        except requests.exceptions.RequestException as e:
+            logging.error('spider failed.')
+            logging.error('proxy_status: %s' % settings.proxy_enable)
+            if settings.proxy_enable is True:
+                logging.error('proxy: %s' % self.s.proxies)
+            logging.error(e)
+            raise e
         if resp.status_code != 200:
             self.SQ.close_datebase()
             error_info='proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies))
+            logging.error('API Error: proxy status: %s, proxy: %s' % (str(settings.proxy_enable),str(self.s.proxies)))
             raise APIError(error_info)
         topics=resp.json()
         for topic in topics:
@@ -53,6 +67,7 @@ class spider(object):
         return
     
     def load_config(self):
+        logging.debug('start load_config')
         self.proxy_enable=settings.proxy_enable
         self.s=requests.session()
         self.s.headers=settings.API_headers

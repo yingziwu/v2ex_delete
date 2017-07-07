@@ -1,16 +1,16 @@
 #!/bin/bash
 
-rqworker node1 &> log/node1.log &
-rqworker node2 &> log/node2.log &
-rqworker node3 &> log/node3.log &
-rqworker node4 &> log/node4.log &
-rqworker node5 &> log/node5.log &
-rqworker topic &> log/topic.log &
-rqworker tester &> log/tester.log &
-rqworker failed &> log/failed1.log &
-rqworker failed &> log/failed2.log &
-rqworker failed &> log/failed3.log &
-rqworker failed &> log/failed4.log &
-rqworker failed &> log/failed5.log &
-rqworker failed &> log/failed6.log &
+rqworker node1 &> log/node1_rqworker.log &
+rqworker node2 &> log/node2_rqworker.log &
+rqworker node3 &> log/node3_rqworker.log &
+rqworker node4 &> log/node4_rqworker.log &
+rqworker node5 &> log/node5_rqworker.log &
+rqworker topic &> log/topic_rqworker.log &
+rqworker tester &> log/tester_rqworker.log &
+rqworker failed &> log/failed1_rqworker.log &
+rqworker failed &> log/failed2_rqworker.log &
+rqworker failed &> log/failed3_rqworker.log &
+rqworker failed &> log/failed4_rqworker.log &
+rqworker failed &> log/failed5_rqworker.log &
+rqworker failed &> log/failed6_rqworker.log &
 echo "Start rqworker,Finished!"

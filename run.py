@@ -19,10 +19,6 @@ from v2ex_base import log_in
 import topic_id_reenqueue
 import settings
 
-logging.basicConfig(level=settings.log_level,
-                    filename=settings.log_path,filemode='a',
-                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
-
 class Start(object):
     '''
     Start the project.
