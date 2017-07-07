@@ -45,6 +45,7 @@ $ sudo apt-get -y install redis-server
 ### 安装依赖
 ```
 $ pip3 install -r requirements.txt
+$ pip3 install requests[socks]
 ```
 
 ### 创建数据库

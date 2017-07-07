@@ -118,7 +118,10 @@ def start(t_id,sleep_time):
     result=t.web_test(t_id, 0)
     t.write_to_sql(result['T_ID'],result['NODE'],result['STATUS'],result['TIME'])
     t.SQ.close_datebase()
-    logging.info('Topic test finish. Topic id is %d, results is : node id %d, status %d' % (int(t_id),result['NODE'],result['STATUS']))
+    if result['NODE'] is not None:
+        logging.info('Topic test finish. Topic id is %d, results is : node id %d, status %d' % (int(t_id),result['NODE'],result['STATUS']))
+    else:
+        logging.info('Topic test finish. Topic id is %d, results is : node id is None, status %d' % (int(t_id),result['STATUS']))
     return
 
 if __name__ == '__main__':
