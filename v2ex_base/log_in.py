@@ -47,7 +47,7 @@ class v2ex_log_in(object):
             raise LogError('try time too much.')
         #1
         try:
-            r1=self.s.get('https://www.v2ex.com/signin')
+            r1=self.s.get('https://www.v2ex.com/signin', timeout=10)
         except requests.exceptions.RequestException as e:
             logging.error('log in error')
             logging.error(try_time)
@@ -82,7 +82,7 @@ class v2ex_log_in(object):
         
     def save_cookies(self):
         logging.debug('start save_cookies')
-        resp=self.s.get('https://www.v2ex.com/go/flamewar')
+        resp=self.s.get('https://www.v2ex.com/go/flamewar', timeout=10)
         if '登录' in resp.text:
             raise LogError('log failed.')
         with open('.cookies.json','w') as f:

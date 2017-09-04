@@ -37,7 +37,7 @@ class spider(object):
     def spider(self):
         logging.debug('start spider.')
         try:
-            resp=self.s.get(self.url)
+            resp=self.s.get(self.url, timeout=10)
         except requests.exceptions.RequestException as e:
             logging.error('spider failed.')
             logging.error('proxy_status: %s' % settings.proxy_enable)

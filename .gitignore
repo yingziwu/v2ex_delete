@@ -114,3 +114,4 @@ dump.rdb
 settings.py
 .node_number.json
 .topics_tester.json
+rsync_vps.sh

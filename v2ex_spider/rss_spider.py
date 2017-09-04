@@ -87,7 +87,7 @@ class Rss_spider(object):
         logging.debug('start latest_and_hot')
         for url in self.latest_hot_api:
             try:
-                resp=self.s.get(url)
+                resp=self.s.get(url, timeout=10)
             except requests.exceptions.RequestException as e:
                 logging.error('latest_and_hot error')
                 logging.error('proxy_status: %s' % self.proxy_enable)

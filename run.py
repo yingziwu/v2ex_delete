@@ -36,16 +36,17 @@ class Start(object):
         self.SQ.open_datebase()
         self.redis_conn=Redis()
         self.load_config()
-
-    def Mode1(self):
-        logging.info('start mode1')
-        #start
+        #base
         self.load_json()
 #         self.update_cookies()
         try:
             self.update_nodes()
         except APIError as e:
             pass
+
+    def Mode1(self):
+        logging.info('start mode1')
+        #start
         self.get_rss()
         self.tasker()
         self.topic_ids_enqueue()
@@ -56,8 +57,7 @@ class Start(object):
     def Mode2(self):
         logging.info('start mode2')
         #start
-        self.load_json()
-#         self.update_cookies()
+
         self.get_rss()
         self.topic_ids_enqueue()
         self.tester_tasker()
@@ -128,7 +128,7 @@ class Start(object):
         if not nodes_time_status:
             logging.info('update nodes')
             try:
-                resp=self.s.get('https://www.v2ex.com/api/nodes/all.json')
+                resp=self.s.get('https://www.v2ex.com/api/nodes/all.json', timeout=10)
             except requests.exceptions.RequestException as e:
                 logging.error('update_node failed.')
                 logging.error('proxy_status: %s' % settings.i_proxy_enable)

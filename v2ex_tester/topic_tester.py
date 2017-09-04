@@ -50,7 +50,7 @@ class tester(object):
         url='https://www.v2ex.com/t/%s' % str(t_id)
         n_time=int(time.time())
         try:
-            resp=self.s.get(url)
+            resp=self.s.get(url, timeout=10)
         except requests.exceptions.RequestException as e:
             logging.error('web_test failed.')
             logging.error('proxy_status: %s' % settings.proxy_enable)
@@ -85,7 +85,7 @@ class tester(object):
         url='https://www.v2ex.com/api/topics/show.json?id=%s' % str(t_id)
         n_time=int(time.time())
         try:
-            resp=self.s_a.get(url)
+            resp=self.s_a.get(url, timeout=10)
         except requests.exceptions.RequestException as e:
             logging.error('api_test failed.')
             logging.error('proxy_status: %s' % settings.proxy_enable)
@@ -126,5 +126,5 @@ def start(t_id,sleep_time):
 
 if __name__ == '__main__':
 #     start(1,5)
-    start(367743,5)
+    start(375807,5)
     print('finish!')
